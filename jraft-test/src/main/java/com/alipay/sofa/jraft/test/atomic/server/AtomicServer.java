@@ -18,6 +18,8 @@ package com.alipay.sofa.jraft.test.atomic.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;

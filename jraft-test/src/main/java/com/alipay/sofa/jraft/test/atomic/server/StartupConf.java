@@ -16,9 +16,7 @@
  */
 package com.alipay.sofa.jraft.test.atomic.server;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -60,17 +58,25 @@ public class StartupConf {
     }
 
     public boolean loadFromFile(String file) throws IOException {
-        try (FileInputStream fin = new FileInputStream(new File(file))) {
-            Properties props = new Properties();
-            props.load(fin);
-            this.groupId = props.getProperty("groupId");
-            this.dataPath = props.getProperty("dataPath", "/tmp/atomic");
-            this.conf = props.getProperty("conf");
-            this.serverAddress = props.getProperty("serverAddress");
-            this.minSlot = Long.valueOf(props.getProperty("minSlot", "0"));
-            this.maxSlot = Long.valueOf(props.getProperty("maxSlot", String.valueOf(Long.MAX_VALUE)));
-            this.totalSlots = Integer.valueOf(props.getProperty("totalSlots", "1"));
-            return this.verify();
+        try {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(file);
+            if (inputStream != null) {
+                Properties props = new Properties();
+                props.load(inputStream);
+                this.groupId = props.getProperty("groupId");
+                this.dataPath = props.getProperty("dataPath", "/tmp/atomic");
+                this.conf = props.getProperty("conf");
+                this.serverAddress = props.getProperty("serverAddress");
+                this.minSlot = Long.parseLong(props.getProperty("minSlot", "0"));
+                this.maxSlot = Long.parseLong(props.getProperty("maxSlot", String.valueOf(Long.MAX_VALUE)));
+                this.totalSlots = Integer.parseInt(props.getProperty("totalSlots", "1"));
+                inputStream.close();
+                return this.verify();
+            } else {
+                throw new FileNotFoundException("File not found: config/server.properties");
+            }
+        } catch (IOException | NumberFormatException e) {
+            throw new RuntimeException(e);
         }
     }
 
