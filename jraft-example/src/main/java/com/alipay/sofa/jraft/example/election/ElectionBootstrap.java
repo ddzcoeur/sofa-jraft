@@ -17,9 +17,12 @@
 package com.alipay.sofa.jraft.example.election;
 
 import com.alipay.sofa.jraft.entity.PeerId;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
- *
  * @author jiachun.fjc
  */
 public class ElectionBootstrap {
@@ -29,9 +32,11 @@ public class ElectionBootstrap {
     public static void main(final String[] args) {
         if (args.length < 4) {
             System.out
-                .println("Usage : java com.alipay.sofa.jraft.example.election.ElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
+                    .println(
+                            "Usage : java com.alipay.sofa.jraft.example.election.ElectionBootstrap {dataPath} {groupId} {serverId} {initConf}");
             System.out
-                .println("Example: java com.alipay.sofa.jraft.example.election.ElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081 127.0.0.1:8081,127.0.0.1:8082,127.0.0.1:8083");
+                    .println(
+                            "Example: java com.alipay.sofa.jraft.example.election.ElectionBootstrap /tmp/server1 election_test 127.0.0.1:8081 127.0.0.1:8081,127.0.0.1:8082,127.0.0.1:8083");
             System.exit(1);
         }
         final String dataPath = args[0];
@@ -39,12 +44,23 @@ public class ElectionBootstrap {
         final String serverIdStr = args[2];
         final String initialConfStr = args[3];
 
-        final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
-        electionOpts.setDataPath(dataPath);
-        electionOpts.setGroupId(groupId);
-        electionOpts.setServerAddress(serverIdStr);
-        electionOpts.setInitialServerAddressList(initialConfStr);
+        List<String> nodeIns = Arrays.asList(initialConfStr.split(","));
+        for (int i = 0; i < nodeIns.size(); i++) {
 
+            final ElectionNodeOptions electionOpts = new ElectionNodeOptions();
+            String nodeServerId = nodeIns.get(i);
+            electionOpts.setDataPath(dataPath + i);
+            electionOpts.setGroupId(groupId);
+            electionOpts.setServerAddress(nodeServerId);
+            electionOpts.setInitialServerAddressList(initialConfStr);
+
+            final ElectionNode node = buildElectionNode();
+            node.init(electionOpts);
+        }
+    }
+
+    @NotNull
+    private static ElectionNode buildElectionNode() {
         final ElectionNode node = new ElectionNode();
         node.addLeaderStateListener(new LeaderStateListener() {
 
@@ -62,6 +78,6 @@ public class ElectionBootstrap {
                 System.out.println("[ElectionBootstrap] Leader stop on term: " + leaderTerm);
             }
         });
-        node.init(electionOpts);
+        return node;
     }
 }
